@@ -61,6 +61,11 @@ def read_tiles_data(spd_file_path: str) -> list[dict]:
     conn = sqlite3.connect(spd_file_path)
     cursor = conn.cursor()
 
+    # Verify that the file has config tables (Dropbox syncs might not contain them on an initial sync)
+    cursor.execute("PRAGMA table_info(config);")
+    if not cursor.fetchone():
+        raise ValueError("SPD file does not contain config tables, ignoring")
+
     # Check the format version - only version 2 is supported at present
     cursor.execute("select value from config where name='fmt_ver';")
     version = cursor.fetchone()[0].decode("utf-8")

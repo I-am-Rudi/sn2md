@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.3.3
+
+### Changed
+
+- Bugfix: Ignore atelier files without sqlite data.
+
 ## v2.3.2
 
 ### Changed
