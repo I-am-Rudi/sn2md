@@ -75,11 +75,12 @@ def read_tiles_data(spd_file_path: str) -> list[dict]:
 
     tiles_data = []
     # Iterate over the layers from the top layer to the bottom layer
-    for i in range(len(layers), 0, -1):
-        if is_not_visible(layers[len(layers) - i]):
+    for layer in layers:
+        if is_not_visible(layer):
             continue
         # Fetch tiles, ordering them by tid.  Replace with the hardcoded `tids` list
-        cursor.execute(f"SELECT tid, tile FROM surface_{i} ORDER BY tid ASC;")
+        surface_idx = ord(layer[2])
+        cursor.execute(f"SELECT tid, tile FROM surface_{surface_idx} ORDER BY tid ASC;")
         tile_dict = {tid: tile_data for tid, tile_data in cursor.fetchall()}
         tiles_data.append(tile_dict)
 
