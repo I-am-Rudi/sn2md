@@ -56,8 +56,18 @@ def clean_bad_tids_from_tiles_data(tiles_data):
     return cleaned_data
 
 
+def sqlite_read_config(cursor: sqlite3.Cursor, name: str, default_value: str) -> str:
+    cursor.execute(f"SELECT value FROM config WHERE name='{name}';")
+    val = cursor.fetchone()
+    logger.debug("config %s: %s", name, val)
+    if not val:
+        logger.warning(f"SPD file does not contain {name}, ignoring")
+        return default_value
+    else:
+        return val[0].decode("utf-8")
 
-def read_tiles_data(spd_file_path: str) -> list[dict]:
+
+def read_tiles_data(spd_file_path: str) -> tuple[list[dict], int, int]:
     conn = sqlite3.connect(spd_file_path)
     cursor = conn.cursor()
 
@@ -80,28 +90,34 @@ def read_tiles_data(spd_file_path: str) -> list[dict]:
 
     tiles_data = []
     # Iterate over the layers from the top layer to the bottom layer
-    for layer in layers:
-        if is_not_visible(layer):
+    max_layer = len(layers) - 1
+    for i in range(max_layer, -1, -1):
+        if is_not_visible(layers[max_layer - i]):
             continue
         # Fetch tiles, ordering them by tid.  Replace with the hardcoded `tids` list
-        surface_idx = ord(layer[2])
-        cursor.execute(f"SELECT tid, tile FROM surface_{surface_idx} ORDER BY tid ASC;")
+        cursor.execute(f"SELECT tid, tile FROM surface_{i} ORDER BY tid ASC;")
         tile_dict = {tid: tile_data for tid, tile_data in cursor.fetchall()}
         tiles_data.append(tile_dict)
 
+    width = int(float(sqlite_read_config(cursor, "surface.width", "0")))
+    height = int(float(sqlite_read_config(cursor, "surface.height", "0")))
+
     conn.close()
 
-    return clean_bad_tids_from_tiles_data(tiles_data)
+    return clean_bad_tids_from_tiles_data(tiles_data), width, height
 
 
 def spd_to_png(spd_file_path: str, output_path: str) -> str:
-    tiles_data = read_tiles_data(spd_file_path)
+    tiles_data, width, height = read_tiles_data(spd_file_path)
     logger.debug("Number of layers: %d", len(tiles_data))
 
-    x_y = find_max_x_y(tiles_data)
+    x_y = (width, height)
+    if x_y == (0, 0):
+        x_y = find_max_x_y(tiles_data)
+
     # Ensure that even if the layers are all empty, we create a blank image
     if x_y == (0, 0):
-        x_y = (TILE_PIXELS * 12, TILE_PIXELS * 16)
+        x_y = (TILE_PIXELS * 12 * 2, TILE_PIXELS * 16 * 2)
     logger.debug("output size: %s", x_y)
     full_image = Image.new("RGBA", x_y)
 
