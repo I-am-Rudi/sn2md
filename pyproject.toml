@@ -8,6 +8,8 @@ reportUnknownVariableType = false
 reportUnknownParameterType = false
 reportUnknownMemberType = false
 reportMissingParameterType = false
+reportAny = false
+reportMissingTypeArgument = false
 
 [tool.poetry]
 name = "sn2md"
@@ -54,3 +56,4 @@ addopts = "--cov=sn2md --cov-report=term-missing --cov-fail-under=85"
 
 [tool.poetry.scripts]
 sn2md = "sn2md.cli:cli"
+
