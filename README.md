@@ -2,7 +2,7 @@
 
 A CLI tool to convert Supernote `.note`, Atelier `.spd`, PDFs, and images to text using any LLM supported by the [LLM library](https://llm.datasette.io/en/stable/plugins/directory.html).
 
-1. Converts the source file to PNG images.
+1. Converts the source files to PNG images.
 2. Sends the images to the LLM to convert to text (markdown is the default format, but is customizable)
 
 ![Supernote to Markdown](docs/supernote-to-markdown.png)
@@ -15,6 +15,7 @@ The default LLM prompt (with gpt-4o-mini) is configured to convert to markdown:
 - Supports basic formatting (lists, tables, etc)
 - Converts of images of diagrams to [mermaid](https://mermaid.js.org).
 - Handles math equations using `$` and `$$` latex math blocks.
+- Describes drawings (such as atelier `.spd` files) as text.
 
 ## Installation
 
@@ -26,7 +27,7 @@ Setup your **OPENAI_API_KEY** environment variable.
 
 ## Usage
 
-To import a single Supernote `.note` file, use the `file` command:
+To import a single file, use the `file` sub-command. A directory of files can be imported using the `directory` sub-command.
 
 ```sh
 # import one .note file (or Atelier .spd, PDFs, or image):
@@ -175,7 +176,7 @@ Data available in .note source files:
 
 ### Other LLM Models
 
-This tool uses [llm](https://llm.datasette.io/), which [supports many services](https://llm.datasette.io/en/stable/other-models.html). You can use any of these models by specifying the model, as long is it a multi-modal model that supports visual inputs (such as gpt-4o-mini, llama3.2-vision, etc).
+This tool uses [llm](https://llm.datasette.io/), which [supports many service providers](https://llm.datasette.io/en/stable/other-models.html). You can use any of these models by specifying the model, as long is it a multi-modal model that supports visual inputs (such as gpt-4o-mini, llama3.2-vision, etc).
 
 Here are a couple examples of using this tool with other models.
 
