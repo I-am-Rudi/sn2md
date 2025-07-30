@@ -54,7 +54,7 @@ def find_content_bounding_box(tile_dict: list[dict]) -> tuple[int, int, int, int
 
 
 def sqlite_read_config(cursor: sqlite3.Cursor, name: str, default_value: str) -> str:
-    _ = cursor.execute(f"SELECT value FROM config WHERE name='{name}';")
+    _ = cursor.execute("SELECT value FROM config WHERE name=?;", (name,))
     val = cursor.fetchone()
     logger.debug("config %s: %s", name, val)
     if not val:
