@@ -240,7 +240,7 @@ Thanks to @redsorbet, who contributed this configuration for [org.toml](./docs/o
 
 #### HTML
 
-A simple Supernote to HTML configuration [html.toml](./ghocs/html.toml) (using tailwind for image styling).
+A simple Supernote to HTML configuration [html.toml](./docs/html.toml) (using tailwind for image styling).
 
 ## Contributing
 
