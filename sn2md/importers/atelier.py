@@ -3,10 +3,10 @@ import logging
 import os
 import sqlite3
 import sys
-from typing_extensions import override
 
 import supernotelib as sn
 from PIL import Image
+from typing_extensions import override
 
 from sn2md.types import ImageExtractor
 
@@ -53,22 +53,6 @@ def find_content_bounding_box(tile_dict: list[dict]) -> tuple[int, int, int, int
     return min_x, min_y, max_x, max_y
 
 
-def find_max_x_y(tile_dict: list[dict]) -> tuple[int, int]:
-    max_x = 0
-    max_y = 0
-
-    for tile_data in tile_dict:
-        for tid in tile_data.keys():
-            row, col = tid_to_row_col(tid)
-            x = row * TILE_PIXELS
-            y = col * TILE_PIXELS
-
-            # Update max_x and max_y
-            max_x = max(max_x, x + TILE_PIXELS)
-            max_y = max(max_y, y + TILE_PIXELS)
-    return max_x, max_y
-
-
 def sqlite_read_config(cursor: sqlite3.Cursor, name: str, default_value: str) -> str:
     _ = cursor.execute(f"SELECT value FROM config WHERE name='{name}';")
     val = cursor.fetchone()
@@ -84,38 +68,56 @@ def read_tiles_data(spd_file_path: str) -> tuple[list[dict], int, int]:
     conn = sqlite3.connect(spd_file_path)
     cursor = conn.cursor()
 
+    def get_config_data(cursor: sqlite3.Cursor, query: str, err_message: str) -> list:
+        _ = cursor.execute(query)
+        result = cursor.fetchone()
+        if not result:
+            conn.close()
+            raise ValueError(err_message)
+        return result
+
     # Verify that the file has config tables (Dropbox syncs might not contain them on an initial sync)
-    _ = cursor.execute("PRAGMA table_info(config);")
-    if not cursor.fetchone():
-        conn.close()
-        raise ValueError("SPD file does not contain config tables, ignoring")
+    _ = get_config_data(
+        cursor,
+        "PRAGMA table_info(config);",
+        "SPD file does not contain config table, ignoring"
+    )
 
     # Check the format version - only version 2 is supported at present
-    _ = cursor.execute("select value from config where name='fmt_ver';")
-    version_row = cursor.fetchone()
-    if version_row is None:
-        conn.close()
-        raise ValueError("SPD file missing format version in config table")
+    version_row = get_config_data(
+        cursor,
+        "SELECT value FROM config WHERE name='fmt_ver';",
+        "SPD file does not contain format version in config table"
+    )
     version = version_row[0].decode("utf-8")
     if version != "2":
         conn.close()
         raise ValueError(f"Unsupported SPD format version: {version}")
 
-    _ = cursor.execute("select value from config where name='ls';")
-    layers_row = cursor.fetchone()
-    if layers_row is None:
-        conn.close()
-        raise ValueError("SPD file missing layers in config table")
+    layers_row = get_config_data(
+        cursor,
+        "select value from config where name='ls';",
+        "SPD file does not contain layers in config table"
+    )
     layers = [v for v in layers_row[0].decode("utf-8").split("\n") if len(v) > 0]
 
     def is_not_visible(x: str) -> bool:
         return x.endswith("\x00")
+
+    def table_exists(cursor: sqlite3.Cursor, table_name: str) -> bool:
+        """Check if a table exists in the database."""
+        _ = cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table_name,))
+        return cursor.fetchone() is not None
 
     tiles_data = []
     # Iterate over the layers from the top layer to the bottom layer
     max_layer = len(layers) - 1
     for i in range(max_layer, -1, -1):
         if is_not_visible(layers[max_layer - i]):
+            logger.debug("Skipping layer %d because it is not visible", i)
+            continue
+        if not table_exists(cursor, f"surface_{i}"):
+            logger.debug("Skipping layer %d because surface_{i} not visible", i, i)
             continue
         # Fetch tiles, ordering them by tid.  Replace with the hardcoded `tids` list
         _ = cursor.execute(f"SELECT tid, tile FROM surface_{i} ORDER BY tid ASC;")
@@ -155,8 +157,8 @@ def _make_full_image(
     MAX_DIMENSION = 50000  # 50k pixels, a very generous limit
     if content_width > MAX_DIMENSION or content_height > MAX_DIMENSION:
         raise ValueError(
-            f"Content dimensions ({content_width}x{content_height}) are excessively large. "
-            f"The .spd file may be corrupt."
+            f"Content dimensions ({content_width}x{content_height}) are excessively large. "  # pyright: ignore[reportImplicitStringConcatenation]
+            "The .spd file may be corrupt."
         )
 
 
