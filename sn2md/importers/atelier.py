@@ -58,7 +58,7 @@ def sqlite_read_config(cursor: sqlite3.Cursor, name: str, default_value: str) ->
     val = cursor.fetchone()
     logger.debug("config %s: %s", name, val)
     if not val:
-        logger.warning(f"SPD file does not contain {name}, ignoring")
+        logger.warning("SPD file does not contain %s, ignoring", name)
         return default_value
     else:
         return val[0].decode("utf-8")
