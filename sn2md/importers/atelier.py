@@ -157,8 +157,8 @@ def _make_full_image(
     MAX_DIMENSION = 50000  # 50k pixels, a very generous limit
     if content_width > MAX_DIMENSION or content_height > MAX_DIMENSION:
         raise ValueError(
-            f"Content dimensions ({content_width}x{content_height}) are excessively large. "  # pyright: ignore[reportImplicitStringConcatenation]
-            "The .spd file may be corrupt."
+            f"""Content dimensions ({content_width}x{content_height}) are excessively large.
+            The .spd file may be corrupt."""
         )
 
 
