@@ -117,7 +117,7 @@ def read_tiles_data(spd_file_path: str) -> tuple[list[dict], int, int]:
             logger.debug("Skipping layer %d because it is not visible", i)
             continue
         if not table_exists(cursor, f"surface_{i}"):
-            logger.debug("Skipping layer %d because surface_{i} not visible", i, i)
+            logger.debug("Skipping layer %d because surface_%d not visible", i, i)
             continue
         # Fetch tiles, ordering them by tid.  Replace with the hardcoded `tids` list
         _ = cursor.execute(f"SELECT tid, tile FROM surface_{i} ORDER BY tid ASC;")
