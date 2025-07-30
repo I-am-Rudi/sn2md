@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.4.0
+
+### Added
+
+- Support Atelier .spd files with different canvas sizes.
+
+### Changed
+
+- Bugfix: Ignore atelier files without sqlite data.
+- Bugfix: Improves SPD layer support.
+
 ## v2.3.2
 
 ### Changed

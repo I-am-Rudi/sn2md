@@ -8,10 +8,12 @@ reportUnknownVariableType = false
 reportUnknownParameterType = false
 reportUnknownMemberType = false
 reportMissingParameterType = false
+reportAny = false
+reportMissingTypeArgument = false
 
 [tool.poetry]
 name = "sn2md"
-version = "2.3.2"
+version = "2.4.0"
 description = "Convert Supernote .note, .spd, PDF, or image files to text/images"
 authors = ["Dane Summers <dsummersl@yahoo.com>"]
 readme = "README.md"
@@ -54,3 +56,4 @@ addopts = "--cov=sn2md --cov-report=term-missing --cov-fail-under=85"
 
 [tool.poetry.scripts]
 sn2md = "sn2md.cli:cli"
+
