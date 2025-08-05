@@ -88,6 +88,7 @@ Context (the last few lines of markdown from the previous page):
 ###
 Convert the image to markdown:
 - If there is a simple diagram that the mermaid syntax can achieve, create a mermaid codeblock of it.
+- If most of the image is a drawing (not written text), add a #drawing tag and describe the drawing in no more than 8 words.
 - When it is unclear what an image is, don't output anything for it.
 - Use $$, $ latex math blocks for math equations.
 - Support Obsidian syntaxes and dataview "field:: value" syntax.
