@@ -1,15 +1,15 @@
 # Supernote to text/image converter (sn2md)
 
-A CLI tool to convert Supernote `.note`, Atelier `.spd`, PDFs, and images to text using any LLM supported by the [LLM library](https://llm.datasette.io/en/stable/plugins/directory.html).
+**sn2md** is a CLI tool for converting binary image files (Supernote `.note`, Atelier `.spd`), PDFs, and PNG into human-readable text formats like Markdown, Org-mode, or HTML. This makes it easy to unlock your your notes for use in other systems (obsidian, emacs org mode, etc).
 
 1. Converts the source files to PNG images.
-2. Sends the images to the LLM to convert to text (markdown is the default format, but is customizable)
+2. Sends images to an LLM to convert it to text using the [llm library](https://llm.datasette.io/en/stable/).
 
 ![Supernote to Markdown](docs/supernote-to-markdown.png)
 
 Sample output: [20240712_151149.md](./docs/20240712_151149/20240712_151149.md)
 
-The default LLM prompt (with gpt-4o-mini) is configured to convert to markdown:
+The default configuration converts images to markdown (with gpt-4o-mini):
 
 - Supports markdown in .note files (#tags, `## Headers`, `[[Links]]`, etc)
 - Supports basic formatting (lists, tables, etc)
@@ -23,7 +23,7 @@ The default LLM prompt (with gpt-4o-mini) is configured to convert to markdown:
 pip install sn2md
 ```
 
-Setup your **OPENAI_API_KEY** environment variable.
+Setup your **OPENAI_API_KEY** environment variable (or use another provider, see below).
 
 ## Usage
 
@@ -233,6 +233,18 @@ Please let me know if you find better prompts!
 ### Output formats
 
 You can output other formats besides markdown. Contributed examples of configuration files are listed below.
+
+#### Different formats by file type
+
+You can supply different configurations by using the `--config` option. For example you could convert `.note` files to markdown, and `.spd` files to plain text:
+
+```sh
+# use the default markdown configuration for .note files:
+sn2md file <path_to_note_file> 
+
+# Use a configuration file (see below for examples) to convert .spd files to HTML:
+sn2md --config <path_to_html_config_file> file <path_to_note_file> 
+```
 
 #### Emacs Orgmode
 
