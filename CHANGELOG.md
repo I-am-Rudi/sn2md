@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.0
+
+### Added
+
+- Adds `--version` option to display the version of the tool.
+
 ## v2.4.0
 
 ### Added

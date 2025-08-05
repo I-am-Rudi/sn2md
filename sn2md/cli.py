@@ -8,6 +8,7 @@ from platformdirs import user_config_dir
 from sn2md.importers.atelier import AtelierExtractor
 from sn2md.importers.pdf import PDFExtractor
 from sn2md.importers.png import PNGExtractor
+from sn2md import __version__
 
 from .importer import (
     logger as importer_logger,
@@ -82,6 +83,7 @@ def get_config(config_file: str) -> Config:
     default=None,
     help="Set the LLM model (default: gpt-4o-mini)",
 )
+@click.version_option(__version__, "-v", "--version")
 @click.pass_context
 def cli(ctx, config, output, force, progress, level, model):
     ctx.obj = {}
