@@ -245,6 +245,63 @@ def test_verify_metadata_file_nested_path(temp_dir):
         mock_check_metadata.assert_called_once_with(expected_path)
 
 
+def test_import_supernote_file_with_image_subdirectory(temp_dir):
+    """Test that images are saved to a subdirectory when image_output_path_template is configured"""
+    filename = os.path.join(temp_dir, "test.note")
+    output = temp_dir
+
+    with open(filename, "w") as f:
+        _ = f.write("test content")
+
+    with (
+        patch("sn2md.importer.check_metadata_file") as mock_check_metadata,
+        patch("sn2md.importer.image_to_markdown") as mock_image_to_md,
+        patch("sn2md.importer.write_metadata_file") as mock_write_metadata,
+        patch("builtins.open", mock_open()) as mock_file,
+        patch("uuid.uuid4") as mock_uuid,
+        patch("os.rename") as mock_rename,
+        patch("os.makedirs") as mock_makedirs,
+        patch("shutil.rmtree") as mock_rmtree,
+    ):
+        mock_uuid.return_value.hex = "test-uuid"
+        mock_extractor = Mock()
+        mock_notebook = Mock()
+        mock_notebook.keywords = []
+        mock_notebook.titles = []
+        mock_notebook.links = []
+
+        mock_image_to_md.side_effect = ["markdown1", "markdown2"]
+
+        config = Config(
+            output_path_template="{{file_basename}}",
+            output_filename_template="{{file_basename}}.md",
+            image_output_path_template="images",
+            prompt="TO_MARKDOWN_TEMPLATE",
+            title_prompt="TO_TEXT_TEMPLATE",
+            template="{{markdown}}",
+            model="mock-model",
+            api_key="mock-key"
+        )
+
+        mock_extractor.get_notebook.return_value = mock_notebook
+        mock_extractor.extract_images.return_value = ["page1.png", "page2.png"]
+
+        import_supernote_file_core(
+            mock_extractor, filename, output, config, force=True, progress=False
+        )
+
+        # Verify that makedirs was called for both output path and image subdirectory
+        makedirs_calls = [call[0][0] for call in mock_makedirs.call_args_list]
+        assert os.path.join(temp_dir, "test-uuid") in makedirs_calls
+        assert os.path.join(temp_dir, "test") in makedirs_calls
+        assert os.path.join(temp_dir, "test", "images") in makedirs_calls
+
+        # Verify that images were moved to the subdirectory
+        rename_calls = [call[0] for call in mock_rename.call_args_list]
+        assert ("page1.png", os.path.join(temp_dir, "test", "images", "page1.png")) in rename_calls
+        assert ("page2.png", os.path.join(temp_dir, "test", "images", "page2.png")) in rename_calls
+
+
 @pytest.mark.parametrize("progress", [True, False])
 def test_import_supernote_directory_core(temp_dir, progress):
     directory = temp_dir

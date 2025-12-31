@@ -136,11 +136,12 @@ def create_context(
     file_name: str,
     model: str,
     template_output: str,
+    image_relative_path: str = "",
 ) -> dict:
     file_basename = os.path.splitext(os.path.basename(file_name))[0]
     images = [
         {
-            "name": os.path.basename(png_path),
+            "name": os.path.join(image_relative_path, os.path.basename(png_path)) if image_relative_path else os.path.basename(png_path),
             "rel_path": png_path,
             "abs_path": os.path.abspath(png_path),
         }
@@ -187,19 +188,30 @@ def generate_output(
     output_path = os.path.join(output, output_path)
     os.makedirs(output_path, exist_ok=True)
 
+    # Render image output path template if configured
+    image_output_path_template = Template(config.image_output_path_template)
+    image_relative_path = image_output_path_template.render(context)
+
+    # Create full image directory path
+    if image_relative_path:
+        image_full_path = os.path.join(output_path, image_relative_path)
+        os.makedirs(image_full_path, exist_ok=True)
+    else:
+        image_full_path = output_path
+
     output_path_and_file = os.path.join(output_path, output_filename)
     with open(output_path_and_file, "w") as f:
         _ = f.write(jinja_markdown)
     logger.debug("Wrote output to %s", output_path_and_file)
 
-    # copy everything from image_output_path to output_path:
+    # Move images to the configured image directory
     for png_path in pngs:
         png_name = os.path.basename(png_path)
-        os.rename(png_path, os.path.join(output_path, png_name))
+        os.rename(png_path, os.path.join(image_full_path, png_name))
 
     write_metadata_file(file_name, output_path_and_file)
 
-    logger.debug("Moved images to %s", output_path)
+    logger.debug("Moved images to %s", image_full_path)
 
     print(output_path_and_file)
 
@@ -235,8 +247,15 @@ def import_supernote_file_core(
         template_output = process_pages(pngs, config, model, progress)
 
         notebook = image_extractor.get_notebook(file_name)
+
+        # Calculate image relative path early for context
+        file_basename = os.path.splitext(os.path.basename(file_name))[0]
+        basic_context = create_basic_context(file_basename, file_name)
+        image_output_path_template = Template(config.image_output_path_template)
+        image_relative_path = image_output_path_template.render(basic_context)
+
         context = create_context(
-            notebook, pngs, config, file_name, model, template_output
+            notebook, pngs, config, file_name, model, template_output, image_relative_path
         )
 
         generate_output(pngs, config, context, file_name, output, template)

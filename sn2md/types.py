@@ -62,6 +62,8 @@ class Config:
     output_path_template: str = "{{file_basename}}"
     # The name of the output files. All template variables are available.
     output_filename_template: str = "{{file_basename}}.md"
+    # The subdirectory path for images relative to output_path. All template variables are available. Empty string means images are stored in the same directory as the output file.
+    image_output_path_template: str = ""
     # The prompt used to convert an image to markdown.
     prompt: str = TO_MARKDOWN_TEMPLATE
     # The prompt used to convert some image to plain text (used for header highlights (H1, H2, etc.))
