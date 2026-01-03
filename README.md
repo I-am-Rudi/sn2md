@@ -1,4 +1,4 @@
-# Supernote to text/image converter (sn2md)
+# Overview
 
 **sn2md** is a CLI tool for converting binary image files (Supernote `.note`, Atelier `.spd`), PDFs, and PNG into human-readable text formats like Markdown, Org-mode, or HTML. This makes it easy to unlock your your notes for use in other systems (obsidian, emacs org mode, etc).
 
