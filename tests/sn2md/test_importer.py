@@ -22,7 +22,20 @@ def temp_dir():
         yield tmpdirname
 
 
-def test_import_supernote_file_core(temp_dir):
+@pytest.mark.parametrize(
+    "output_path_template,image_output_path_template,expected_output_dir,expected_image_dir,expected_image_names",
+    [
+        # Default: images and output in same directory
+        ("{{file_basename}}", "{{file_basename}}", "test", "test", ["page1.png", "page2.png"]),
+        # Images in subdirectory relative to output
+        ("{{file_basename}}", "{{file_basename}}/images", "test", "test/images", ["images/page1.png", "images/page2.png"]),
+        # Images in completely different directory
+        ("notes/{{file_basename}}", "images/{{file_basename}}", "notes/test", "images/test", ["../../images/test/page1.png", "../../images/test/page2.png"]),
+        # Images at root level, output in subdirectory
+        ("notes/{{file_basename}}", "{{file_basename}}", "notes/test", "test", ["../../test/page1.png", "../../test/page2.png"]),
+    ]
+)
+def test_import_supernote_file_core(temp_dir, output_path_template, image_output_path_template, expected_output_dir, expected_image_dir, expected_image_names):
     filename = os.path.join(temp_dir, "test.note")
     output = temp_dir
 
@@ -36,8 +49,8 @@ def test_import_supernote_file_core(temp_dir):
         patch("builtins.open", mock_open()) as mock_file,
         patch("uuid.uuid4") as mock_uuid,
         patch("os.rename") as mock_rename,
-        patch("os.rename") as mock_rename,
-        patch("os.rename") as mock_rename,
+        patch("os.makedirs") as mock_makedirs,
+        patch("shutil.rmtree") as mock_rmtree,
     ):
         mock_uuid.return_value.hex = "test-uuid"
         mock_extractor = Mock()
@@ -52,8 +65,9 @@ def test_import_supernote_file_core(temp_dir):
         mock_image_to_md.side_effect = ["markdown1", "markdown2"]
 
         config = Config(
-            output_path_template="{{file_basename}}",
+            output_path_template=output_path_template,
             output_filename_template="{{file_basename}}.md",
+            image_output_path_template=image_output_path_template,
             prompt="TO_MARKDOWN_TEMPLATE",
             title_prompt="TO_TEXT_TEMPLATE",
             template="{{markdown}}",
@@ -71,8 +85,18 @@ def test_import_supernote_file_core(temp_dir):
         mock_check_metadata.assert_not_called()
         assert mock_image_to_md.call_count == 2
         mock_write_metadata.assert_called_once()
+
+        # Verify images were moved to the correct directory
         assert mock_rename.call_count == 2
-        assert mock_rename.call_count == 2
+        rename_calls = [call[0] for call in mock_rename.call_args_list]
+        expected_full_image_dir = os.path.join(temp_dir, expected_image_dir)
+        assert ("page1.png", os.path.join(expected_full_image_dir, "page1.png")) in rename_calls
+        assert ("page2.png", os.path.join(expected_full_image_dir, "page2.png")) in rename_calls
+
+        # Verify makedirs was called for both output and image directories
+        makedirs_calls = [call[0][0] for call in mock_makedirs.call_args_list]
+        assert os.path.join(temp_dir, expected_output_dir) in makedirs_calls
+        assert expected_full_image_dir in makedirs_calls
 
 
 def test_import_supernote_file_core_non_notebook(temp_dir):

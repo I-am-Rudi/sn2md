@@ -136,11 +136,12 @@ def create_context(
     file_name: str,
     model: str,
     template_output: str,
+    image_relative_path: str = ".",
 ) -> dict:
     file_basename = os.path.splitext(os.path.basename(file_name))[0]
     images = [
         {
-            "name": os.path.basename(png_path),
+            "name": os.path.join(image_relative_path, os.path.basename(png_path)) if image_relative_path != "." else os.path.basename(png_path),
             "rel_path": png_path,
             "abs_path": os.path.abspath(png_path),
         }
@@ -176,6 +177,7 @@ def generate_output(
     file_name: str,
     output: str,
     template,
+    image_full_path: str,
 ) -> None:
     jinja_markdown = template.render(context)
 
@@ -187,19 +189,22 @@ def generate_output(
     output_path = os.path.join(output, output_path)
     os.makedirs(output_path, exist_ok=True)
 
+    # Create image directory
+    os.makedirs(image_full_path, exist_ok=True)
+
     output_path_and_file = os.path.join(output_path, output_filename)
     with open(output_path_and_file, "w") as f:
         _ = f.write(jinja_markdown)
     logger.debug("Wrote output to %s", output_path_and_file)
 
-    # copy everything from image_output_path to output_path:
+    # Move images to the configured image directory
     for png_path in pngs:
         png_name = os.path.basename(png_path)
-        os.rename(png_path, os.path.join(output_path, png_name))
+        os.rename(png_path, os.path.join(image_full_path, png_name))
 
     write_metadata_file(file_name, output_path_and_file)
 
-    logger.debug("Moved images to %s", output_path)
+    logger.debug("Moved images to %s", image_full_path)
 
     print(output_path_and_file)
 
@@ -235,11 +240,28 @@ def import_supernote_file_core(
         template_output = process_pages(pngs, config, model, progress)
 
         notebook = image_extractor.get_notebook(file_name)
+
+        # Calculate paths early for context
+        file_basename = os.path.splitext(os.path.basename(file_name))[0]
+        basic_context = create_basic_context(file_basename, file_name)
+
+        # Render output path and image path independently
+        output_path_template = Template(config.output_path_template)
+        output_path_rendered = output_path_template.render(basic_context)
+        output_path_full = os.path.join(output, output_path_rendered)
+
+        image_output_path_template = Template(config.image_output_path_template)
+        image_path_rendered = image_output_path_template.render(basic_context)
+        image_path_full = os.path.join(output, image_path_rendered)
+
+        # Calculate relative path from output directory to image directory
+        image_relative_path = os.path.relpath(image_path_full, output_path_full)
+
         context = create_context(
-            notebook, pngs, config, file_name, model, template_output
+            notebook, pngs, config, file_name, model, template_output, image_relative_path
         )
 
-        generate_output(pngs, config, context, file_name, output, template)
+        generate_output(pngs, config, context, file_name, output, template, image_path_full)
 
 
 def import_supernote_directory_core(
