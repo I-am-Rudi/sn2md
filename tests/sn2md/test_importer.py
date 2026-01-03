@@ -236,7 +236,9 @@ def test_verify_metadata_file(temp_dir):
 
     with patch("sn2md.importer.check_metadata_file") as mock_check_metadata:
         verify_metadata_file(config, output, filename)
-        mock_check_metadata.assert_called_once_with(os.path.join(output, "test"))
+        mock_check_metadata.assert_called_once_with(
+            os.path.join(output, "test"), filename
+        )
 
 
 def test_verify_metadata_file_nested_path(temp_dir):
@@ -266,7 +268,7 @@ def test_verify_metadata_file_nested_path(temp_dir):
 
     with patch("sn2md.importer.check_metadata_file") as mock_check_metadata:
         verify_metadata_file(config, output, filename)
-        mock_check_metadata.assert_called_once_with(expected_path)
+        mock_check_metadata.assert_called_once_with(expected_path, filename)
 
 
 @pytest.mark.parametrize("progress", [True, False])
