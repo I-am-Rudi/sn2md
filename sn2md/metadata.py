@@ -8,7 +8,64 @@ from .types import ConversionMetadata
 logger = logging.getLogger(__name__)
 
 
-def check_metadata_file(metadata_file: str) -> ConversionMetadata | None:
+def _load_metadata_unversioned(data) -> list[ConversionMetadata]:
+    if isinstance(data, dict):
+        data = [data]
+    if not isinstance(data, list):
+        raise ValueError("Invalid metadata format")
+
+    return [ConversionMetadata(**entry) for entry in data]
+
+
+def _load_metadata_v1(data) -> list[ConversionMetadata]:
+    if isinstance(data, dict):
+        data = [data]
+    if not isinstance(data, list):
+        raise ValueError("Invalid metadata format")
+
+    entries: list[ConversionMetadata] = []
+    for entry in data:
+        if entry.get("version") != 1:
+            raise ValueError("Unsupported metadata version")
+
+        entries.append(ConversionMetadata(**entry))
+
+    return entries
+
+
+def _load_metadata_entries(metadata_path: str) -> list[ConversionMetadata]:
+    with open(metadata_path, "r") as f:
+        data = yaml.safe_load(f) or []
+
+    if isinstance(data, list):
+        if not data:
+            return []
+
+        if all("version" not in entry for entry in data):
+            return _load_metadata_unversioned(data)
+
+        if all(entry.get("version") == 1 for entry in data):
+            return _load_metadata_v1(data)
+
+        if any("version" in entry for entry in data):
+            raise ValueError("Unsupported metadata version")
+
+    if isinstance(data, dict):
+        if "version" not in data:
+            return _load_metadata_unversioned(data)
+
+        if data.get("version") == 1:
+            return _load_metadata_v1(data)
+
+    if isinstance(data, dict) and "version" in data:
+        raise ValueError("Unsupported metadata version")
+
+    raise ValueError("Unsupported metadata format or version")
+
+
+def check_metadata_file(
+    metadata_file: str, input_file: str | None = None
+) -> ConversionMetadata | None:
     """Check the hashes of the source file against the metadata.
 
     Raises a ValueError if the source file hasn't been modified.
@@ -17,29 +74,41 @@ def check_metadata_file(metadata_file: str) -> ConversionMetadata | None:
     """
     metadata_path = os.path.join(metadata_file, ".sn2md.metadata.yaml")
     if os.path.exists(metadata_path):
-        with open(metadata_path, "r") as f:
-            data = yaml.safe_load(f)
-            metadata = ConversionMetadata(**data)
+        metadata_entries = _load_metadata_entries(metadata_path)
+        if not metadata_entries:
+            return None
 
-            if not os.path.exists(metadata.output_file):
-                raise ValueError("Output file does not exist anymore!")
+        if input_file:
+            metadata = next(
+                (entry for entry in metadata_entries if entry.input_file == input_file),
+                None,
+            )
+            if metadata is None:
+                return None
+        else:
+            if len(metadata_entries) > 1:
+                raise ValueError("Multiple metadata entries found; specify input file")
+            metadata = metadata_entries[0]
 
-            with open(metadata.output_file, "rb") as f:
-                output_hash = hashlib.sha1(f.read()).hexdigest()
+        if not os.path.exists(metadata.output_file):
+            raise ValueError("Output file does not exist anymore!")
 
-            if not os.path.exists(metadata.input_file):
-                raise ValueError("Input file does not exist anymore!")
+        with open(metadata.output_file, "rb") as f:
+            output_hash = hashlib.sha1(f.read()).hexdigest()
 
-            with open(metadata.input_file, "rb") as f:
-                source_hash = hashlib.sha1(f.read()).hexdigest()
+        if not os.path.exists(metadata.input_file):
+            raise ValueError("Input file does not exist anymore!")
 
-            if metadata.input_hash == source_hash:
-                raise ValueError(f"Input {metadata.input_file} has NOT changed!")
+        with open(metadata.input_file, "rb") as f:
+            source_hash = hashlib.sha1(f.read()).hexdigest()
 
-            if metadata.output_hash != output_hash:
-                raise ValueError(f"Output {metadata.output_file} HAS been changed!")
+        if metadata.input_hash == source_hash:
+            raise ValueError(f"Input {metadata.input_file} has NOT changed!")
 
-            return metadata
+        if metadata.output_hash != output_hash:
+            raise ValueError(f"Output {metadata.output_file} HAS been changed!")
+
+        return metadata
 
 
 def write_metadata_file(source_file: str, output_file: str) -> None:
@@ -52,15 +121,24 @@ def write_metadata_file(source_file: str, output_file: str) -> None:
         source_hash = hashlib.sha1(f.read()).hexdigest()
 
     metadata_path = os.path.join(output_path, ".sn2md.metadata.yaml")
-    with open(metadata_path, "w") as f:
-        yaml.dump(
-            asdict(ConversionMetadata(
-                input_file=source_file,
-                input_hash=source_hash,
-                output_file=output_file,
-                output_hash=output_hash,
-            )),
-            f,
+    existing_metadata = []
+    if os.path.exists(metadata_path):
+        existing_metadata = _load_metadata_entries(metadata_path)
+
+    metadata_entries = [
+        entry for entry in existing_metadata if entry.input_file != source_file
+    ]
+
+    metadata_entries.append(
+        ConversionMetadata(
+            input_file=source_file,
+            input_hash=source_hash,
+            output_file=output_file,
+            output_hash=output_hash,
         )
+    )
+
+    with open(metadata_path, "w") as f:
+        yaml.dump([asdict(entry) for entry in metadata_entries], f)
 
 

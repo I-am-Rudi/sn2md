@@ -93,6 +93,8 @@ class ConversionMetadata:
     output_file: str
     # The hash of the output file at the time it was generated.
     output_hash: str
+    # Version of the metadata entry
+    version: int = 1
 
 class ImageExtractor(ABC):
     @abstractmethod

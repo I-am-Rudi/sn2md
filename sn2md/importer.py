@@ -217,7 +217,7 @@ def verify_metadata_file(config: Config, output: str, file_name: str) -> None:
     output_path = output_path_template.render(basic_context)
     output_path = os.path.join(output, output_path)
 
-    check_metadata_file(output_path)
+    check_metadata_file(output_path, file_name)
 
 
 def import_supernote_file_core(
