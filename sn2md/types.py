@@ -83,6 +83,7 @@ class Config:
         if self.api_key is None:
             self.api_key = self.openai_api_key
 
+
 @dataclass
 class ConversionMetadata:
     # The input file name
@@ -93,8 +94,7 @@ class ConversionMetadata:
     output_file: str
     # The hash of the output file at the time it was generated.
     output_hash: str
-    # Version of the metadata entry
-    version: int = 1
+
 
 class ImageExtractor(ABC):
     @abstractmethod
@@ -104,5 +104,3 @@ class ImageExtractor(ABC):
     @abstractmethod
     def get_notebook(self, filename: str) -> Notebook | None:
         pass
-
-

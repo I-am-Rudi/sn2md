@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.6.0
+
+### Added
+
+- Adds `image_output_path_template` configuration option to allow for independent image output paths.
+- Add versioned metadata handling.
+
+### Changed
+
+- Migrated project structure and switched to `uv` for dependency management.
+- Improved CI pipeline with GitHub Actions.
+
 ## v2.5.0
 
 ### Added

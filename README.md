@@ -52,6 +52,7 @@ Values that you can configure:
 - `template`: The output template to generate markdown.
 - `output_filename_template`: The filename that is generated. Basic template variables are available. (default: `{{file_basename}}.md`).
 - `output_path_template`: The directory that is created to store output. Basic template variables are available. (default: `{{file_basename}}`).
+- `image_output_path_template`: The path for images (independent from `output_path_template`). Basic template variables are available. (default: `{{file_basename}}`).
 - `prompt`: The prompt sent to the LLM. Requires a `{context}` placeholder
   to help the AI understand the context of the previous page.
 - `title_prompt`: The prompt sent to the OpenAI API to decode any titles (H1-H4 supernote highlights).
