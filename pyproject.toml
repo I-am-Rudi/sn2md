@@ -61,10 +61,6 @@ dev = [
   "types-tqdm>=4.67.0.20250809",
 ]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["sn2md/*.py"]
