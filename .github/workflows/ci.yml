@@ -25,8 +25,8 @@ jobs:
       - name: Install uv
         run: pip install uv
 
-      - name: Sync deps (dev)
-        run: uv sync --group dev
+      - name: Make Setup
+        run: make setup
 
       - name: CI
         run: make ci

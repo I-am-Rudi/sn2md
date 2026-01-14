@@ -1737,7 +1737,7 @@ wheels = [
 [[package]]
 name = "sn2md"
 version = "2.6.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "click" },
     { name = "jinja2" },
