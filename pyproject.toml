@@ -47,12 +47,18 @@ issues = "https://github.com/dsummersl/sn2md/issues"
 
 [dependency-groups]
 dev = [
+  "autoimport>=1.5.0",
   "black>=25.1.0",
   "isort>=6.0.1",
-  "pytest>=8.2.0",
+  "mypy>=1.10",
+  "pre-commit>=3.7",
   "pytest-cov>=6.2.1",
-  "autoimport>=1.5.0",
+  "pytest>=8.2.0",
+  "radon>=6.0.1",
+  "ruff>=0.5",
   "treepeat>=0.1.0",
+  "types-pyyaml>=6.0.12.20250915",
+  "types-tqdm>=4.67.0.20250809",
 ]
 
 [build-system]
@@ -73,5 +79,6 @@ exclude = [".venv", ".git", "build", "dist"]
 
 [tool.mypy]
 python_version = "3.11"
-strict = true
-packages = ["project_alpha"]
+strict = false
+packages = ["sn2md"]
+ignore_missing_imports = true

@@ -109,6 +109,7 @@ def check_metadata_file(
             raise ValueError(f"Output {metadata.output_file} HAS been changed!")
 
         return metadata
+    return None
 
 
 def write_metadata_file(source_file: str, output_file: str) -> None:
@@ -125,9 +126,7 @@ def write_metadata_file(source_file: str, output_file: str) -> None:
     if os.path.exists(metadata_path):
         existing_metadata = _load_metadata_entries(metadata_path)
 
-    metadata_entries = [
-        entry for entry in existing_metadata if entry.input_file != source_file
-    ]
+    metadata_entries = [entry for entry in existing_metadata if entry.input_file != source_file]
 
     metadata_entries.append(
         ConversionMetadata(
@@ -140,5 +139,3 @@ def write_metadata_file(source_file: str, output_file: str) -> None:
 
     with open(metadata_path, "w") as f:
         yaml.dump([asdict(entry) for entry in metadata_entries], f)
-
-
