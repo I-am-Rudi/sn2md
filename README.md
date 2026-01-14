@@ -266,8 +266,8 @@ git clone https://github.com/dsummersl/sn2md.git
 
 cd sn2md
 
-poetry install
-pytest
+make setup
+make test
 ```
 
 ## License

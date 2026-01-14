@@ -28,14 +28,39 @@ def temp_dir():
         # Default: images and output in same directory
         ("{{file_basename}}", "{{file_basename}}", "test", "test", ["page1.png", "page2.png"]),
         # Images in subdirectory relative to output
-        ("{{file_basename}}", "{{file_basename}}/images", "test", "test/images", ["images/page1.png", "images/page2.png"]),
+        (
+            "{{file_basename}}",
+            "{{file_basename}}/images",
+            "test",
+            "test/images",
+            ["images/page1.png", "images/page2.png"],
+        ),
         # Images in completely different directory
-        ("notes/{{file_basename}}", "images/{{file_basename}}", "notes/test", "images/test", ["../../images/test/page1.png", "../../images/test/page2.png"]),
+        (
+            "notes/{{file_basename}}",
+            "images/{{file_basename}}",
+            "notes/test",
+            "images/test",
+            ["../../images/test/page1.png", "../../images/test/page2.png"],
+        ),
         # Images at root level, output in subdirectory
-        ("notes/{{file_basename}}", "{{file_basename}}", "notes/test", "test", ["../../test/page1.png", "../../test/page2.png"]),
-    ]
+        (
+            "notes/{{file_basename}}",
+            "{{file_basename}}",
+            "notes/test",
+            "test",
+            ["../../test/page1.png", "../../test/page2.png"],
+        ),
+    ],
 )
-def test_import_supernote_file_core(temp_dir, output_path_template, image_output_path_template, expected_output_dir, expected_image_dir, expected_image_names):
+def test_import_supernote_file_core(
+    temp_dir,
+    output_path_template,
+    image_output_path_template,
+    expected_output_dir,
+    expected_image_dir,
+    expected_image_names,
+):
     filename = os.path.join(temp_dir, "test.note")
     output = temp_dir
 
@@ -46,11 +71,11 @@ def test_import_supernote_file_core(temp_dir, output_path_template, image_output
         patch("sn2md.importer.check_metadata_file") as mock_check_metadata,
         patch("sn2md.importer.image_to_markdown") as mock_image_to_md,
         patch("sn2md.importer.write_metadata_file") as mock_write_metadata,
-        patch("builtins.open", mock_open()) as mock_file,
+        patch("builtins.open", mock_open()) as _,
         patch("uuid.uuid4") as mock_uuid,
         patch("os.rename") as mock_rename,
         patch("os.makedirs") as mock_makedirs,
-        patch("shutil.rmtree") as mock_rmtree,
+        patch("shutil.rmtree") as _,
     ):
         mock_uuid.return_value.hex = "test-uuid"
         mock_extractor = Mock()
@@ -72,7 +97,7 @@ def test_import_supernote_file_core(temp_dir, output_path_template, image_output
             title_prompt="TO_TEXT_TEMPLATE",
             template="{{markdown}}",
             model="mock-model",
-            api_key="mock-key"
+            api_key="mock-key",
         )
 
         mock_extractor.get_notebook.return_value = mock_notebook
@@ -110,8 +135,8 @@ def test_import_supernote_file_core_non_notebook(temp_dir):
         patch("sn2md.importer.check_metadata_file") as mock_check_metadata,
         patch("sn2md.importer.image_to_markdown") as mock_image_to_md,
         patch("sn2md.importer.write_metadata_file") as mock_write_metadata,
-        patch("sn2md.importer.os.rename") as mock_rename,
-        patch("builtins.open", mock_open()) as mock_file,
+        patch("sn2md.importer.os.rename") as _,
+        patch("builtins.open", mock_open()) as _,
         patch("uuid.uuid4") as mock_uuid,
     ):
         mock_uuid.return_value.hex = "test-uuid"
@@ -148,9 +173,8 @@ def test_import_supernote_directory_core(temp_dir, progress, force):
         patch("sn2md.importer.import_supernote_file_core") as mock_import_file,
         patch("sn2md.importer.tqdm") as mock_tqdm,
     ):
-        import_supernote_directory_core(
-            directory, output, config, force=force, progress=progress
-        )
+        mock_tqdm.side_effect = lambda x, **kwargs: x
+        import_supernote_directory_core(directory, output, config, force=force, progress=progress)
         assert mock_import_file.call_count == 1
         assert mock_import_file.call_args_list[0][0][1:] == (
             note_file,
@@ -189,11 +213,12 @@ def test_create_notebook_context():
         title_prompt="TO_TEXT_TEMPLATE",
         template="{{markdown}}",
         model="mock-model",
-        api_key="mock-key"
+        api_key="mock-key",
     )
 
-    with patch("sn2md.importer.image_to_text") as mock_image_to_text, \
-         patch("sn2md.importer.convert_binary_to_image") as mock_convert_image:
+    with patch("sn2md.importer.image_to_text") as mock_image_to_text, patch(
+        "sn2md.importer.convert_binary_to_image"
+    ) as mock_convert_image:
         mock_image_to_text.return_value = "Test Title"
 
         context = create_notebook_context(mock_notebook, config, "gpt-4")
@@ -231,14 +256,12 @@ def test_verify_metadata_file(temp_dir):
         title_prompt="TO_TEXT_TEMPLATE",
         template="{{markdown}}",
         model="mock-model",
-        api_key="mock-key"
+        api_key="mock-key",
     )
 
     with patch("sn2md.importer.check_metadata_file") as mock_check_metadata:
         verify_metadata_file(config, output, filename)
-        mock_check_metadata.assert_called_once_with(
-            os.path.join(output, "test"), filename
-        )
+        mock_check_metadata.assert_called_once_with(os.path.join(output, "test"), filename)
 
 
 def test_verify_metadata_file_nested_path(temp_dir):
@@ -255,7 +278,7 @@ def test_verify_metadata_file_nested_path(temp_dir):
         title_prompt="TO_TEXT_TEMPLATE",
         template="{{markdown}}",
         model="mock-model",
-        api_key="mock-key"
+        api_key="mock-key",
     )
 
     expected_path = os.path.join(
@@ -263,39 +286,9 @@ def test_verify_metadata_file_nested_path(temp_dir):
         "notes",
         datetime.fromtimestamp(os.path.getctime(filename)).strftime("%Y"),
         datetime.fromtimestamp(os.path.getctime(filename)).strftime("%m"),
-        "test"
+        "test",
     )
 
     with patch("sn2md.importer.check_metadata_file") as mock_check_metadata:
         verify_metadata_file(config, output, filename)
         mock_check_metadata.assert_called_once_with(expected_path, filename)
-
-
-@pytest.mark.parametrize("progress", [True, False])
-def test_import_supernote_directory_core(temp_dir, progress):
-    directory = temp_dir
-    output = temp_dir
-    config = None
-
-    note_file = os.path.join(directory, "test.note")
-    with open(note_file, "w") as f:
-        f.write("test content")
-
-    with (
-        patch("sn2md.importer.import_supernote_file_core") as mock_import_file,
-        patch("sn2md.importer.tqdm") as mock_tqdm,
-    ):
-        mock_tqdm.return_value = [note_file]
-        import_supernote_directory_core(
-            directory, output, config, force=True, progress=progress
-        )
-        assert mock_import_file.call_count == 1
-        assert mock_import_file.call_args_list[0][0][1:] == (
-            note_file,
-            output,
-            config,
-            True,
-            progress,
-            None,
-        )
-        assert mock_tqdm.called == progress
