@@ -14,7 +14,13 @@ def _load_metadata_unversioned(data) -> list[ConversionMetadata]:
     if not isinstance(data, list):
         raise ValueError("Invalid metadata format")
 
-    return [ConversionMetadata(**entry) for entry in data]
+    entries = []
+    for entry in data:
+        # Remove version if it exists in the entry (old format)
+        entry_copy = entry.copy()
+        entry_copy.pop("version", None)
+        entries.append(ConversionMetadata(**entry_copy))
+    return entries
 
 
 def _load_metadata_v1(data) -> list[ConversionMetadata]:
@@ -28,14 +34,21 @@ def _load_metadata_v1(data) -> list[ConversionMetadata]:
         if entry.get("version") != 1:
             raise ValueError("Unsupported metadata version")
 
-        entries.append(ConversionMetadata(**entry))
+        entry_copy = entry.copy()
+        entry_copy.pop("version", None)
+        entries.append(ConversionMetadata(**entry_copy))
 
     return entries
 
 
 def _load_metadata_entries(metadata_path: str) -> list[ConversionMetadata]:
     with open(metadata_path, "r") as f:
-        data = yaml.safe_load(f) or []
+        data = yaml.safe_load(f) or {}
+
+    if isinstance(data, dict) and "version" in data and "files" in data:
+        if data["version"] == 1:
+            return _load_metadata_unversioned(data["files"])
+        raise ValueError("Unsupported metadata version")
 
     if isinstance(data, list):
         if not data:
@@ -138,4 +151,10 @@ def write_metadata_file(source_file: str, output_file: str) -> None:
     )
 
     with open(metadata_path, "w") as f:
-        yaml.dump([asdict(entry) for entry in metadata_entries], f)
+        yaml.dump(
+            {
+                "version": 1,
+                "files": [asdict(entry) for entry in metadata_entries],
+            },
+            f,
+        )
