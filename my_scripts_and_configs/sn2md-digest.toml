@@ -1,0 +1,52 @@
+model = "gemini-2.5-flash-lite"
+prompt = """###
+Context (the last few lines of markdown from the previous page):
+{context}
+###
+Please transcribe the attached images into Markdown. Follow these strict formatting rules to match the document's structure:
+- Main Title: Use a single # header for the document title found at the top.
+- Printed Text: Place all printed text snippets inside Obsidian-style quote callouts: > [!quote] Source Info. Include the filename and page number header inside the callout title. Remove linebreaks from the textblock. Each line of transcribed text should have a `>` prefix. 
+- Handwritten Annotations: Transcribe any handwritten text into a note callout immediately following the relevant quote: > [!note] Annotations:.  Remove linebreaks from the textblock. Each line of transcribed text should have a `>` prefix. 
+Only transcribe explicit linebreaks, ignore all others.
+Each line of text should be on a new line with a `>` prefix.
+- If there is a simple diagram that the mermaid syntax can achieve, create a mermaid codeblock of it.
+- Mathematical Notation: Use LaTeX (enclosed in $) for all scientific constants, variables, and equations (e.g., ls​, c, ℏ, G, Sp​=−Tp​V). For equations that do not appear inline use $$.  Note: For the 'h-bar' symbol in the text, use $\neg h$.
+- Separation: Use a horizontal rule --- to separate distinct blocks or sections as they appear in the images.
+- Do not transcribe the page numbering from the images.
+"""
+
+template = """
+---
+created: {{year_month_day}}
+tags: supernote, atomic
+state: unedited
+---
+
+{{llm_output}}
+
+# Images
+{% for image in images %}
+- ![{{ image.name }}]({{image.name}})
+{%- endfor %}
+
+{% if keywords %}
+# Keywords
+{% for keyword in keywords %}
+- Page {{ keyword.page_number }}: {{ keyword.content }}
+{%- endfor %}
+{%- endif %}
+
+{% if links %}
+# Links
+{% for link in links %}
+- Page {{ link.page_number }}: {{ link.type }} {{ link.inout }} [[{{ link.name | replace('.note', '')}}]]
+{%- endfor %}
+{%- endif %}
+
+{% if titles %}
+# Titles
+{% for title in titles %}
+- Page {{ title.page_number }}: Level {{ title.level }} "{{ title.content }}"
+{%- endfor %}
+{%- endif %}
+"""

@@ -1,0 +1,54 @@
+model = "gemini-2.5-flash-lite"
+prompt = """###
+Context (the last few lines of markdown from the previous page):
+{context}
+###
+Convert the image to markdown:
+- If there is a simple diagram that the mermaid syntax can achieve, create a mermaid codeblock of it.
+- If most of the image is a drawing (not written text), add a #drawing tag and describe the drawing in no more than 8 words.
+- When it is unclear what an image is, don't output anything for it.
+- Use $$, $ latex math blocks for math equations.
+- Support Obsidian syntaxes and dataview "field:: value" syntax.
+- Do not wrap text in codeblocks.
+- If `Annotation:` denotes text, than put it into a >[!note] box
+- If there is a horizontal line use `---`
+- Underlined text should be interpreted as an obsidian link ta a page with the same name as the text, and the link should be in the format of [[Page Name]].
+- Headings will be indicated in the Handwriting by the normal markdown syntax. Just use the same "#", "##" for level 2 and so on.
+- The document will have background structure, lines, or dots that are not part of the content and should be ignored.
+"""
+
+template = """
+---
+created: {{year_month_day}}
+tags: supernote, atomic
+state: unedited
+---
+
+{{llm_output}}
+
+# Images
+{% for image in images %}
+- ![{{ image.name }}]({{image.name}})
+{%- endfor %}
+
+{% if keywords %}
+# Keywords
+{% for keyword in keywords %}
+- Page {{ keyword.page_number }}: {{ keyword.content }}
+{%- endfor %}
+{%- endif %}
+
+{% if links %}
+# Links
+{% for link in links %}
+- Page {{ link.page_number }}: {{ link.type }} {{ link.inout }} [[{{ link.name | replace('.note', '')}}]]
+{%- endfor %}
+{%- endif %}
+
+{% if titles %}
+# Titles
+{% for title in titles %}
+- Page {{ title.page_number }}: Level {{ title.level }} "{{ title.content }}"
+{%- endfor %}
+{%- endif %}
+"""
