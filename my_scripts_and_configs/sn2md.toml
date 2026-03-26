@@ -19,9 +19,10 @@ Convert the image to markdown:
 
 template = """
 ---
-created: {{year_month_day}}
-tags: supernote, atomic
-state: unedited
+tags: atomic
+up: 
+    - [[{{year_month_day}}]]
+    - [[Supernote Inbox]]
 ---
 
 {{llm_output}}

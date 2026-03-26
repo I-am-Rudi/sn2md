@@ -17,9 +17,10 @@ Each line of text should be on a new line with a `>` prefix.
 
 template = """
 ---
-created: {{year_month_day}}
-tags: supernote, atomic
-state: unedited
+tags: literature
+up: 
+    - [[{{year_month_day}}]]
+    - [[Supernote Inbox]]
 ---
 
 {{llm_output}}
